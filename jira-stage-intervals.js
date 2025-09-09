@@ -2,7 +2,7 @@ import fs from "fs";
 import { parse } from "csv-parse/sync";
 
 // Load the CSV
-const csvData = fs.readFileSync("jira_stage_times.csv", "utf8");
+const csvData = fs.readFileSync("jira_stage_intervals.csv", "utf8");
 const records = parse(csvData, {
   columns: true,
   skip_empty_lines: true,
