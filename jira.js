@@ -46,8 +46,11 @@ async function getAllIssues() {
 
   return allIssues;
 }
-function calculateStageTimes(issue) {
-  const statusTimes = {};
+
+/**
+ * Calculate stage intervals with start/end timestamps
+ */
+function calculateStageIntervals(issue) {
   const histories = issue.changelog.histories;
 
   // Sort changelog histories by created date (ascending)
@@ -57,6 +60,7 @@ function calculateStageTimes(issue) {
 
   let prevStatus = null;
   let prevDate = null;
+  const intervals = [];
 
   sortedHistories.forEach((history) => {
     history.items.forEach((item) => {
@@ -69,10 +73,13 @@ function calculateStageTimes(issue) {
           const diffHours = diffMs / 1000 / 60 / 60;
 
           if (diffHours > 0) {
-            if (!statusTimes[prevStatus]) {
-              statusTimes[prevStatus] = 0;
-            }
-            statusTimes[prevStatus] += diffHours;
+            intervals.push({
+              issueKey: issue.key,
+              status: prevStatus,
+              startDate: prevDate.toISOString(),
+              endDate: changedAt.toISOString(),
+              hoursSpent: diffHours.toFixed(2),
+            });
           }
         }
 
@@ -84,7 +91,6 @@ function calculateStageTimes(issue) {
 
   // Handle last status → resolution date or now
   if (prevStatus && prevDate) {
-    // Use resolutiondate if available, otherwise now
     const endDate = issue.fields.resolutiondate
       ? new Date(issue.fields.resolutiondate)
       : new Date();
@@ -93,33 +99,24 @@ function calculateStageTimes(issue) {
     const diffHours = diffMs / 1000 / 60 / 60;
 
     if (diffHours > 0) {
-      if (!statusTimes[prevStatus]) {
-        statusTimes[prevStatus] = 0;
-      }
-      statusTimes[prevStatus] += diffHours;
+      intervals.push({
+        issueKey: issue.key,
+        status: prevStatus,
+        startDate: prevDate.toISOString(),
+        endDate: endDate.toISOString(),
+        hoursSpent: diffHours.toFixed(2),
+      });
     }
   }
 
-  return statusTimes;
+  return intervals;
 }
 
 /**
  * Save results to CSV
  */
-function saveResultsToCSV(results, filename = "jira_stage_times.csv") {
-  const fields = ["issueKey", "status", "hoursSpent"];
-  const rows = [];
-
-  results.forEach((res) => {
-    Object.entries(res.statusTimes).forEach(([status, hours]) => {
-      rows.push({
-        issueKey: res.issueKey,
-        status,
-        hoursSpent: hours.toFixed(2),
-      });
-    });
-  });
-
+function saveResultsToCSV(rows, filename = "jira_stage_intervals.csv") {
+  const fields = ["issueKey", "status", "startDate", "endDate", "hoursSpent"];
   const csv = parse(rows, { fields });
   fs.writeFileSync(filename, csv);
   console.log(`✅ Results saved to ${filename}`);
@@ -132,12 +129,13 @@ function saveResultsToCSV(results, filename = "jira_stage_times.csv") {
   try {
     const issues = await getAllIssues();
 
-    const results = issues.map((issue) => {
-      const statusTimes = calculateStageTimes(issue);
-      return { issueKey: issue.key, statusTimes };
+    const allIntervals = [];
+    issues.forEach((issue) => {
+      const intervals = calculateStageIntervals(issue);
+      allIntervals.push(...intervals);
     });
 
-    saveResultsToCSV(results);
+    saveResultsToCSV(allIntervals);
   } catch (error) {
     console.error(error.response?.data || error.message);
   }
