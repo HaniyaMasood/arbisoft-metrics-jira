@@ -1,10 +1,10 @@
-# Arbisoft Data Room Metrics (Bottleneck and Workflow Effeciency)
+# Arbisoft Data Room Metrics (Bottleneck and Workflow Efficiency)
 
-Script to fetch all issues with changelog (pagination) from Jira project and get the values to show the bottlenecks faced in the stages. Gives data in a csv file that can be used to generate charts (Sample added). Also sample data for the stages is also shown at the bottom.
+Script to fetch all issues with changelog (pagination) from the Jira project and get the values to show the bottlenecks faced in the stages. Gives data in a csv file that can be used to generate charts (Sample added). Also, sample data for the stages is also shown at the bottom.
 
 ## Bottleneck Indicators
 
-Export changelog via Jira api Calculate using script time spent in each individual stage.
+Export the changelog via the Jira API and calculate the time spent in each stage using the scripts.
 
 ### Setup Instructions
 
@@ -12,7 +12,7 @@ Follow these steps to set up the environment:
 
 1. **Download the folder**:
 
-   Create .env file and use .env.example to get the env varaibaled and add your Jira API token
+   Create .env file and use .env.example to get the env variables and add your Jira API token
 
    ```bash
    touch .env
@@ -28,7 +28,7 @@ Follow these steps to set up the environment:
 
    ```bash
    node jira
-   node jira-stage-times.js
+   node jira-stage-times
    ```
 
 ### Sample Output
